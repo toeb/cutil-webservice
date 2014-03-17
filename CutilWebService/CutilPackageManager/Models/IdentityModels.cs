@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNet.Identity.EntityFramework;
+using System.Data.Entity;
 
 namespace CutilPackageManager.Models
 {
@@ -13,5 +14,7 @@ namespace CutilPackageManager.Models
             : base("DefaultConnection")
         {
         }
+
+        public IDbSet<Package> Packages { get; set; }
     }
 }

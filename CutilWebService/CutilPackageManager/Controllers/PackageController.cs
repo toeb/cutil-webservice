@@ -1,76 +1,127 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Entity;
-using System.Diagnostics;
 using System.Linq;
-using System.Net.Mime;
-using System.Threading.Tasks;
+using System.Net;
 using System.Web;
-using System.Web.Http;
+using System.Web.Mvc;
+using CutilPackageManager.Models;
 
 namespace CutilPackageManager.Controllers
 {
-  public class Package
-  {
-    public int Id { get; set; }
-    public string PackageName { get; set; }
-    public string PackageDescription { get; set; }
-    public string PackageSource { get; set; }
-    public string Owner { get; set; }
-    public string Password { get; set; }
-
-    public bool Visible { get; set; }
-    public string Version { get; set; }
-  }
-  public class PackageManagerDbContext : DbContext
-  {
-    public IDbSet<Package> Packages { get; set; }
-  }
-  public class PackageController : ApiController
-  {
-    PackageManagerDbContext context = new PackageManagerDbContext();
-    public IEnumerable<Test> Get()
+    public class PackageController : Controller
     {
-      yield return new Test() { Id="a", Name = "A"};
-      yield return new Test() { Id = "b", Name = "B" };
-      yield return new Test() { Id = "c", Name = "C" };
-      /*
-      foreach (var package in context.Packages.Where(p => p.Visible).AsNoTracking())
-      {
-        package.Password = "";
-        yield return package;
-      }*/
-    }
-    public Package Post([FromBody] Package package)
-    {
+        private ApplicationDbContext db = new ApplicationDbContext();
 
-      package.Visible = true;
-      package.Owner = User.Identity.Name;
-      context.Packages.Add(package);
-      context.SaveChanges();
-      package.Password = Guid.NewGuid().ToString();
-      return package;
-    
-    }
+        // GET: /Package/
+        public ActionResult Index()
+        {
+            return View(db.Packages.ToList());
+        }
 
-    public class Test
-    {
-      public string Id { get; set; }
-      public string Name { get; set; }
-    }
-    public async Task<Test> Put()
-    {
-      var data = await this.Request.Content.ReadAsStringAsync();
-      return new Test(){Id = "asd", Name = "bdbd"};
-    }
+        // GET: /Package/Details/5
+        public ActionResult Details(int? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            Package package = db.Packages.Find(id);
+            if (package == null)
+            {
+                return HttpNotFound();
+            }
+            return View(package);
+        }
 
+        // GET: /Package/Create
+        public ActionResult Create()
+        {
+            return View();
+        }
 
-    public void Delete(Package package)
-    {
-      var pack = context.Packages.Single(p => p.Id == package.Id);
-      pack.Visible = false;
-      context.SaveChanges();
-      return;
+        // POST: /Package/Create
+        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
+        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Create([Bind(Include="Id,PackageName,PackageDescription,PackageSource,Owner,Password,Visible,Version,Identifier")] Package package)
+        {
+            if (ModelState.IsValid)
+            {
+                db.Packages.Add(package);
+                db.SaveChanges();
+                return RedirectToAction("Index");
+            }
+
+            return View(package);
+        }
+
+        // GET: /Package/Edit/5
+        public ActionResult Edit(int? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            Package package = db.Packages.Find(id);
+            if (package == null)
+            {
+                return HttpNotFound();
+            }
+            return View(package);
+        }
+
+        // POST: /Package/Edit/5
+        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
+        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Edit([Bind(Include="Id,PackageName,PackageDescription,PackageSource,Owner,Password,Visible,Version,Identifier")] Package package)
+        {
+            if (ModelState.IsValid)
+            {
+                db.Entry(package).State = EntityState.Modified;
+                db.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            return View(package);
+        }
+
+        // GET: /Package/Delete/5
+        public ActionResult Delete(int? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            Package package = db.Packages.Find(id);
+            if (package == null)
+            {
+                return HttpNotFound();
+            }
+            return View(package);
+        }
+
+        // POST: /Package/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public ActionResult DeleteConfirmed(int id)
+        {
+            Package package = db.Packages.Find(id);
+            db.Packages.Remove(package);
+            db.SaveChanges();
+            return RedirectToAction("Index");
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                db.Dispose();
+            }
+            base.Dispose(disposing);
+        }
     }
-  }
 }
