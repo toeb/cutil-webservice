@@ -37,7 +37,7 @@ namespace CutilPackageManager.Controllers.Api
 
     [HttpGet]
     [ActionName("resolve")]
-    public PackageDto Resolve(string package)
+    public object Resolve(string package)
     {
       try
       {
@@ -55,9 +55,7 @@ namespace CutilPackageManager.Controllers.Api
         {
           pkg = context.Packages.FirstOrDefault(p => p.Identifier == id && p.Version == version);
         }
-        if (pkg == null) throw new HttpException((int)HttpStatusCode.NotFound, "could not resolve " + package);
-
-        return new PackageDto(pkg);
+        return JsonConvert.DeserializeObject(pkg.Descriptor);
       }
       catch (Exception e)
       {
