@@ -10,5 +10,6 @@ namespace CutilPackageManager
         {
             ConfigureAuth(app);
         }
+      
     }
 }

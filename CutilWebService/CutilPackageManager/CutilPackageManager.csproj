@@ -192,6 +192,14 @@
     <Compile Include="Migrations\201403161609055_asd2.Designer.cs">
       <DependentUpon>201403161609055_asd2.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201404100040222_asd1.cs" />
+    <Compile Include="Migrations\201404100040222_asd1.Designer.cs">
+      <DependentUpon>201404100040222_asd1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201404100109009_a.cs" />
+    <Compile Include="Migrations\201404100109009_a.Designer.cs">
+      <DependentUpon>201404100109009_a.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\IdentityModels.cs" />
@@ -209,8 +217,8 @@
     <Content Include="Content\Site.css" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
-    <None Include="Properties\PublishProfiles\Default Settings %282%29.pubxml" />
-    <None Include="Properties\PublishProfiles\Default Settings.pubxml" />
+    <Content Include="Content\pushed.tgz" />
+    <None Include="Properties\PublishProfiles\cps.thetoeb.de.pubxml" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
     <Content Include="Scripts\jquery-1.10.2.js" />
     <Content Include="Scripts\jquery-1.10.2.min.js" />
@@ -255,6 +263,8 @@
     <Content Include="Views\Package\Details.cshtml" />
     <Content Include="Views\Package\Edit.cshtml" />
     <Content Include="Views\Package\Index.cshtml" />
+    <Content Include="Views\Package\ManagePackages.cshtml" />
+    <Content Include="Views\Account\ApiKey.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
@@ -272,6 +282,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201403161609055_asd2.resx">
       <DependentUpon>201403161609055_asd2.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201404100040222_asd1.resx">
+      <DependentUpon>201404100040222_asd1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201404100109009_a.resx">
+      <DependentUpon>201404100109009_a.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

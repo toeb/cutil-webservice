@@ -35,6 +35,12 @@ namespace CutilPackageManager.Controllers
             return View(package);
         }
 
+        [Authorize]
+        public ActionResult ManagePackages()
+        {
+         var packages =  db.Packages.Where(p=>p.User == User.Identity.Name).ToArray();
+         return View(packages);
+        }
 
         protected override void Dispose(bool disposing)
         {

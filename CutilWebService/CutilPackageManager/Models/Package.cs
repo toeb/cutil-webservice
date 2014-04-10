@@ -23,6 +23,8 @@ namespace CutilPackageManager.Models
     public string Descriptor { get; set; }
 
     public byte[] Data { get; set; }
+
+    public string User { get; set; }
   }
 
 }

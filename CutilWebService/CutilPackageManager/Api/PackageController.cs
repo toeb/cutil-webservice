@@ -19,20 +19,57 @@ using System.Web.Http;
 
 namespace CutilPackageManager.Controllers.Api
 {
+  class package_query
+  {
+    public string whole { get; set; }
+    public string @string { get; set; }
+    public string package_constraint { get; set; }
+    public string id_constraint { get; set; }
+    public version_constraint version_constraint { get; set; }
+  }
+  class version_constraint
+  {
+    public string template { get; set; }
+    public string elements { get; set; }
+
+  }
   public class PackageController : ApiController
   {
     ApplicationDbContext context = new ApplicationDbContext();
     [HttpGet]
+    [HttpPut]
     [ActionName("query")]
-    public IEnumerable<string> Query(string query)
+    public async Task<IEnumerable<string>> Query()
     {
-
-      foreach (var package in context.Packages.Where(p => p.Visible).AsNoTracking())
+      var content = await Request.Content.ReadAsStringAsync();
+      var packages = context.Packages.Where(p => p.Visible).ToArray();
+      try
       {
-        package.Password = "";
-        yield return package.Identifier + "@" + package.Version;
+        if (content != "")
+        {
+          var query = JsonConvert.DeserializeObject<package_query>(content);
+          if (!string.IsNullOrWhiteSpace(query.id_constraint))
+          {
+            packages = packages.Where(p => p.Identifier.StartsWith(query.id_constraint)).ToArray();
+          }
+          //todo correct version query
+          if (query.version_constraint != null && !string.IsNullOrWhiteSpace(query.version_constraint.template))
+          {
+            packages = packages.Where(p => p.Version.StartsWith(query.version_constraint.template)).ToArray();
+          }
+        }
       }
+      catch (Exception e)
+      {
+
+      }
+
+
+      var res =  packages.Select(p => p.Identifier + "@" + p.Version).ToArray();
+      return res;
     }
+    
+
 
 
     [HttpGet]
@@ -87,7 +124,7 @@ namespace CutilPackageManager.Controllers.Api
       if (pkg == null) throw new HttpException((int)HttpStatusCode.NotFound, "could not resolve " + id);
 
       res.Content = new ByteArrayContent(pkg.Data);
-     // res.Headers.Add("Content-Type", "application/x-compressed");
+      // res.Headers.Add("Content-Type", "application/x-compressed");
       return res;
       throw new Exception();
     }

@@ -1,0 +1,14 @@
+﻿@model CutilPackageManager.Models.ApplicationUser
+@{
+    ViewBag.Title = "Api Key";
+}
+
+<h2>CreateApiKey</h2>
+
+
+<p>
+    Your Api Key is <strong>@Model.ApiKey</strong>.  You need to configure your command line client's WebServicePackageSource to use it for publishing/deleting. You can modify your cutil.config or just execute the following
+    <pre>
+    SHELL> cutil config pm.sources.web --set WebServicePackageSource("@Url.HttpRouteUrl("DefaultApi", new { controller="package" })" "@Model.ApiKey")
+</pre>
+</p>
