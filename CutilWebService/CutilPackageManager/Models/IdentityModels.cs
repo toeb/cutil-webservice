@@ -7,6 +7,10 @@ namespace CutilPackageManager.Models
     public class ApplicationUser : IdentityUser
     {
       public string ApiKey { get; set; }
+      public string Email { get; set; }
+      public bool IsConfirmed { get; set; }
+
+      public string ConfirmationToken { get; set; }
     }
 
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
@@ -15,7 +19,7 @@ namespace CutilPackageManager.Models
             : base("DefaultConnection")
         {
         }
-
+        
         public IDbSet<Package> Packages { get; set; }
     }
 }

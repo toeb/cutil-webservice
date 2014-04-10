@@ -25,6 +25,10 @@ namespace CutilPackageManager.Models
     public byte[] Data { get; set; }
 
     public string User { get; set; }
+
+    public int DownloadCount { get; set; }
+
+    public bool CurrentVersion { get; set; }
   }
 
 }

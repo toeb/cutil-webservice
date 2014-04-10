@@ -1,4 +1,5 @@
 ﻿using CutilPackageManager.Models;
+using CutilPackageManager.Util;
 using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
 using Newtonsoft.Json;
@@ -13,6 +14,7 @@ using System.Net.Http;
 using System.Net.Mime;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
@@ -65,10 +67,10 @@ namespace CutilPackageManager.Controllers.Api
       }
 
 
-      var res =  packages.Select(p => p.Identifier + "@" + p.Version).ToArray();
+      var res = packages.Select(p => p.Identifier + "@" + p.Version).ToArray();
       return res;
     }
-    
+
 
 
 
@@ -113,15 +115,15 @@ namespace CutilPackageManager.Controllers.Api
       Package pkg;
       if (string.IsNullOrEmpty(version))
       {
-
         pkg = context.Packages.Where(p => p.Identifier == pkgid).OrderByDescending(p => p.Version).FirstOrDefault();
-
       }
       else
       {
         pkg = context.Packages.FirstOrDefault(p => p.Identifier == pkgid && p.Version == version);
       }
       if (pkg == null) throw new HttpException((int)HttpStatusCode.NotFound, "could not resolve " + id);
+      pkg.DownloadCount++;
+      context.SaveChanges();
 
       res.Content = new ByteArrayContent(pkg.Data);
       // res.Headers.Add("Content-Type", "application/x-compressed");
@@ -133,8 +135,14 @@ namespace CutilPackageManager.Controllers.Api
     [ActionName("unpublish")]
     [HttpPut]
     [HttpGet]
+    [ApiKeyAuthenticationFilterAttribute]
     public void Unpublish(string id)
     {
+
+      if (!Thread.CurrentPrincipal.Identity.IsAuthenticated) throw new HttpException((int)HttpStatusCode.Unauthorized, "not authorized");
+      var username = Thread.CurrentPrincipal.Identity.Name;
+
+
       var match = Regex.Match(id, @"(?<name>[^@]*)(@(?<version>.*))?");
       var pkgid = match.Groups["name"].Value;
       var version = match.Groups["version"].Value;
@@ -142,6 +150,13 @@ namespace CutilPackageManager.Controllers.Api
 
 
       pkg = context.Packages.FirstOrDefault(p => p.Identifier == pkgid && p.Version == version);
+
+      if (pkg.User != username)
+      {
+        throw new HttpException((int)HttpStatusCode.Unauthorized, "you are not the owner of the package");
+      }
+
+
 
       if (pkg == null) throw new HttpException((int)HttpStatusCode.NotFound, "could not resolve " + id);
 
@@ -154,9 +169,11 @@ namespace CutilPackageManager.Controllers.Api
 
     [ActionName("publish")]
     [HttpPut]
-    public async Task<PackageDto> Publish(string format)
+    [ApiKeyAuthenticationFilterAttribute]
+    public async Task<PackageDto> Publish(string format, string action)
     {
-
+      if (!Thread.CurrentPrincipal.Identity.IsAuthenticated) throw new HttpException((int)HttpStatusCode.Unauthorized, "not authorized");
+      var username = Thread.CurrentPrincipal.Identity.Name;
 
       if (format == "tgz")
       {
@@ -199,6 +216,7 @@ namespace CutilPackageManager.Controllers.Api
         var package = new Package();
         package.Identifier = descriptor.id;
         package.Version = descriptor.version;
+        package.User = username;
         package.PackageName = descriptor.name;
         if (package.PackageName == null) package.PackageName = package.Identifier;
         package.PackageDescription = descriptor.description;
@@ -209,7 +227,30 @@ namespace CutilPackageManager.Controllers.Api
 
         package.Descriptor = pd;
 
+        var previousPackage = context.Packages.FirstOrDefault(p => p.Identifier == descriptor.id);
+        if (previousPackage != null)
+        {
+          if (previousPackage.User != username)
+          {
+            throw new HttpException((int)HttpStatusCode.BadRequest, "you are not owner of package");
+          }
+        }
+
         context.Packages.Add(package);
+        // set current version
+        if (action == "make_current")
+        {
+          package.CurrentVersion = true;
+          var currentPackages = context.Packages.Where(p => p.Identifier == package.Identifier && package.CurrentVersion);
+          foreach (var pp in currentPackages)
+          {
+            pp.CurrentVersion = false;
+
+          }
+        }
+
+
+
         await context.SaveChangesAsync();
 
         return new PackageDto(package);

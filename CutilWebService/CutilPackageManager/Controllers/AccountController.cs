@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
@@ -9,6 +6,8 @@ using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.Owin.Security;
 using CutilPackageManager.Models;
+using System.Net.Mail;
+using System.Net;
 
 namespace CutilPackageManager.Controllers
 {
@@ -46,6 +45,10 @@ namespace CutilPackageManager.Controllers
       if (ModelState.IsValid)
       {
         var user = await UserManager.FindAsync(model.UserName, model.Password);
+        if (!user.IsConfirmed)
+        {
+          ModelState.AddModelError("", "Account is not confirmed yet");
+        }
         if (user != null)
         {
           await SignInAsync(user, model.RememberMe);
@@ -79,20 +82,69 @@ namespace CutilPackageManager.Controllers
       if (ModelState.IsValid)
       {
         var user = new ApplicationUser() { UserName = model.UserName };
+        user.IsConfirmed = false;
+        user.ConfirmationToken = Guid.NewGuid().ToString("N");
         var result = await UserManager.CreateAsync(user, model.Password);
         if (result.Succeeded)
         {
-          await SignInAsync(user, isPersistent: false);
-          return RedirectToAction("Index", "Home");
+          SendEmailConfirmation(model.Email, model.UserName, user.ConfirmationToken);
+          return RegisterStepTwo(model.UserName);
+          //   await SignInAsync(user, isPersistent: false);
+          // return RedirectToAction("Index", "Home");
         }
         else
         {
           AddErrors(result);
         }
+
+
       }
 
       // If we got this far, something failed, redisplay form
       return View(model);
+    }
+
+    [AllowAnonymous]
+    public async Task<ActionResult> ConfirmEmail(ConfirmEmailViewModel viemodel)
+    {
+      var user = UserManager.FindByName(viemodel.UserName);
+      if (user.ConfirmationToken == viemodel.ConfirmationCode)
+      {
+        user.IsConfirmed = true;
+        UserManager.Update(user);
+        await SignInAsync(user, false);
+      }
+      return RedirectToAction("Index", "Home");
+    }
+
+    [AllowAnonymous]
+    public ActionResult RegisterStepTwo(string username)
+    {
+      return View("RegisterStepTwo", new ConfirmEmailViewModel() { UserName = username });
+    }
+    private void SendEmailConfirmation(string email, string user, string token)
+    {
+      var client = new SmtpClient();
+      MailAddress to = new MailAddress(email);
+
+
+
+
+      var msg = new MailMessage();
+      msg.Subject = "cps.thetoeb.de - account confirmation email";
+      var url = Request.Url.GetLeftPart(UriPartial.Authority) + Url.Action("ConfirmEmail", "Account", new ConfirmEmailViewModel() { UserName = user, ConfirmationCode = token });
+      msg.Body = "Please confirm the creation of your account by clicking the following <a href=" + url + ">link</a> or by manually entering the following confirmation code : <b> " + token + "</b>";
+      msg.IsBodyHtml = true;
+      msg.To.Add(to);
+
+      try
+      {
+        client.Send(msg);
+      }
+      catch (Exception e)
+      {
+        throw new HttpException("failed to send confirmation mail");
+      }
     }
 
     //
@@ -288,7 +340,7 @@ namespace CutilPackageManager.Controllers
     {
 
       var applicationUser = UserManager.FindByName(User.Identity.Name);
-      
+
       if (applicationUser == null)
       {
         return new HttpNotFoundResult("missing user");
