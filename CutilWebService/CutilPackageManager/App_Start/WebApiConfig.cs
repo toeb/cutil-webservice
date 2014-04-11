@@ -16,8 +16,8 @@ namespace CutilPackageManager
 
             config.Routes.MapHttpRoute(
                 name: "TestApi",
-                routeTemplate: "testapi/{controller}/{action}/{id}",
-                defaults: new { id = RouteParameter.Optional }
+                routeTemplate: "testapi/{action}",
+                defaults: new { id = RouteParameter.Optional , controller="TestApi"}
             );
             config.Routes.MapHttpRoute(
                 name: "DefaultApi",
